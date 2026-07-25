@@ -43,7 +43,7 @@ function signRender.display()
         end
         term.setBackgroundColor(colors.black)
         mf.writeOn(monitor, text, nil, nil, {
-            font = "./fonts/science",
+            font = "./fonts/Scientifica-Bold",
             condense = true,
             dx = 10
         })

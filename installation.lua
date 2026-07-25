@@ -1,9 +1,36 @@
 local NAME = "FoxSigns"
 
+local urls = {
+    basalt = "https://raw.githubusercontent.com/Pyroxenium/Basalt2/refs/heads/main/release/",
+    morefonts = "https://raw.githubusercontent.com/MichielP1807/more-fonts/main/",
+    kaifox = "https://raw.githubusercontent.com/KaiDevvy/personal-cctweaked/refs/heads/main/"
+}
+
 local files = {
-    {url = "https://raw.githubusercontent.com/Pyroxenium/Basalt2/refs/heads/main/release/basalt-full.lua", dest = "basalt.lua"},
-    {url = "https://raw.githubusercontent.com/MichielP1807/more-fonts/main/morefonts.lua", dest = "morefonts.lua"},
-    {url = "https://raw.githubusercontent.com/michielp1807/more-fonts/refs/heads/main/fonts/Scientifica-Bold", dest = "fonts/science"}
+    {url = urls["basalt"], file = "basalt-full.lua", rename = "basalt.lua"},
+    {url = urls["morefonts"], file = "morefonts.lua" },
+    {url = urls["morefonts"], file = "fonts/Scientifica-Bold", dest = "fonts/"},
+    {url = urls["kaifox"], file = "startup.lua" },
+    {url = urls["kaifox"], file = "signRender.lua" },
+    {url = urls["kaifox"], file = "signEditor.lua" },
+    {url = urls["kaifox"], file = "config.lua" },
+    {url = urls["kaifox"], file = "symbols/arrows/arrow_left.img", dest="symbols/arrows/" },
+    {url = urls["kaifox"], file = "symbols/arrows/arrow_up.img", dest="symbols/arrows/" },
+    {url = urls["kaifox"], file = "symbols/arrows/arrow_right.img", dest="symbols/arrows/" },
+    {url = urls["kaifox"], file = "symbols/arrows/arrow_down.img", dest="symbols/arrows/" },
+    {url = urls["kaifox"], file = "symbols/arrows/arrow_upleft.img", dest="symbols/arrows/" },
+    {url = urls["kaifox"], file = "symbols/arrows/arrow_downright.img", dest="symbols/arrows/" },
+    {url = urls["kaifox"], file = "symbols/arrows/arrow_downleft.img", dest="symbols/arrows/" },
+    {url = urls["kaifox"], file = "symbols/arrows/arrow_upright.img", dest="symbols/arrows/" },
+    {url = urls["kaifox"], file = "symbols/icons/gate.img", dest="symbols/icons/" },
+    {url = urls["kaifox"], file = "symbols/icons/drop.img", dest="symbols/icons/" },
+    {url = urls["kaifox"], file = "symbols/icons/cog.img", dest="symbols/icons/" },
+    {url = urls["kaifox"], file = "symbols/icons/fire.img", dest="symbols/icons/" },
+    {url = urls["kaifox"], file = "symbols/icons/laser.img", dest="symbols/icons/" },
+    {url = urls["kaifox"], file = "symbols/icons/runic.img", dest="symbols/icons/" },
+    {url = urls["kaifox"], file = "symbols/icons/skull.img", dest="symbols/icons/" },
+    {url = urls["kaifox"], file = "symbols/icons/tram.img", dest="symbols/icons/" },
+    {url = urls["kaifox"], file = "symbols/icons/tree.img", dest="symbols/icons/" },
 }
 
 local w,h = term.getSize()
@@ -35,12 +62,21 @@ end
 
 local function download(url, dest, attempt)
     local rawData = http.get(url)
-    updateText("Downloading " .. url:match("[^/]*$"))
+    local fileName = url:match("[^/]*$")
+    updateText("Downloading " .. fileName)
 
     if not rawData then
         if attempt == 3 then error("Failed to download " .. url .. " after 3 attempts.") end
         updateText("failed to download " .. url .. ". Trying again (attempt " .. attempt .. "/3)")
         return download(url, attempt+1)
+    end
+
+    local destination = dest
+    if destination == nil then
+        destination = fileName
+    end
+    if destination[#destination] == "/" then
+        destination = destination .. fileName
     end
 
     local data = rawData.readAll()
@@ -55,7 +91,7 @@ local function downloadAll(downloads, total)
     if nextFile then
         sleep(0.1)
         parallel.waitForAll(function() downloadAll(downloads, total) end, function()
-            download(nextFile.url, nextFile.dest, 1)
+            download(nextFile.url .. nextFile.file, nextFile.dest .. nextFile.rename , 1)
             totalDownloaded = totalDownloaded + 1
             progressBar(totalDownloaded / total)
         end)
