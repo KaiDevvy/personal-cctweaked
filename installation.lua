@@ -81,7 +81,13 @@ local function download(url, dest, attempt)
 
     local data = rawData.readAll()
 
-    local file = fs.open(dest, "w+")
+    local file = fs.open(destination, "w+")
+    if file == nil then
+        term.clear()
+        term.setCursorPos(1,1)
+        term.write(destination)
+        error()
+    end
     file.write(data)
     file.close()
 end
@@ -91,7 +97,14 @@ local function downloadAll(downloads, total)
     if nextFile then
         sleep(0.1)
         parallel.waitForAll(function() downloadAll(downloads, total) end, function()
-            download(nextFile.url .. nextFile.file, nextFile.dest .. nextFile.rename , 1)
+            local destination = ""
+            if nextFile.dest ~= nil then
+                destination = destination .. nextFile.dest
+            end
+            if nextFile.rename ~= nil then
+                destination = destination .. nextFile.rename
+            end
+            download(nextFile.url .. nextFile.file, destination, 1)
             totalDownloaded = totalDownloaded + 1
             progressBar(totalDownloaded / total)
         end)
