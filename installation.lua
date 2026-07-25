@@ -72,22 +72,17 @@ local function download(url, dest, attempt)
     end
 
     local destination = dest
-    if destination == nil then
+    if destination == nil or destination == "" then
         destination = fileName
     end
-    if destination[#destination] == "/" then
+    if string.sub(destination,-1) == "/" then
         destination = destination .. fileName
     end
+    updateText(destination)
 
     local data = rawData.readAll()
 
     local file = fs.open(destination, "w+")
-    if file == nil then
-        term.clear()
-        term.setCursorPos(1,1)
-        term.write(destination)
-        error()
-    end
     file.write(data)
     file.close()
 end
