@@ -120,7 +120,7 @@ local function install()
     downloadAll(files, #files)
 
     progressBar(100)
-    updateText("Complete!")
+    updateText("Complete! Starting now..")
     sleep(1)
 
     term.setBackgroundColor(colors.black)
@@ -128,6 +128,7 @@ local function install()
 
     term.clear()
     term.setCursorPos(1,1)
+    os.reboot()
 end
 
 install()
