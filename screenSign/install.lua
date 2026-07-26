@@ -1,9 +1,9 @@
-local NAME = "FoxSigns"
+local NAME = "Fox's Signs"
 
 local urls = {
     basalt = "https://raw.githubusercontent.com/Pyroxenium/Basalt2/refs/heads/main/release/",
     morefonts = "https://raw.githubusercontent.com/MichielP1807/more-fonts/main/",
-    kaifox = "https://raw.githubusercontent.com/KaiDevvy/personal-cctweaked/refs/heads/main/"
+    kaifox = "https://raw.githubusercontent.com/KaiDevvy/personal-cctweaked/refs/heads/main/screenSign/"
 }
 
 local files = {
