@@ -70,6 +70,8 @@ local function buildUI()
 
     statusDisplay = main:addLabel()
         :setPosition(5,5)
+
+    basalt.start()
 end
 
 local function init()
