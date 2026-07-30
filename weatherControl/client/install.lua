@@ -1,4 +1,4 @@
-local NAME = "Fox's Signs"
+local NAME = "Weather Control (CLIENT)"
 
 local urls = {
     basalt = "https://raw.githubusercontent.com/Pyroxenium/Basalt2/refs/heads/main/release/",
