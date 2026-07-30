@@ -1,111 +1,76 @@
-local NAME = "Fox's Signs"
 
-local urls = {
-    basalt = "https://raw.githubusercontent.com/Pyroxenium/Basalt2/refs/heads/main/release/",
-    kaifox = "https://raw.githubusercontent.com/KaiDevvy/personal-cctweaked/refs/heads/main/weatherControl/host/"
-}
 
-local files = {
-    {url = urls["basalt"], file = "basalt-full.lua", rename = "basalt.lua"},
-    {url = urls["kaifox"], file = "startup.lua" },
-}
 
-local w,h = term.getSize()
-local totalDownloaded = 0
+local PROTOCOL = "FOXNET"
+local HOST_NAME = "MANIPULATOR"
 
-local function progressBar(amount)
-    local PADDING = 5
-    local width = w - PADDING * 2
-    term.setBackgroundColor(colors.gray)
-    term.setTextColor(colors.blue)
-    term.setCursorPos(PADDING,11)
-    for i = PADDING, width+PADDING do
-        if (i/width < amount) then
-            write("#")
-        else
-            write(" ")
+local function formatTime12h(ticks)
+    local hoursDecimal = (ticks / 1000 + 6) % 24
+
+    local hour24 = math.floor(hoursDecimal)
+    local minute = math.floor((hoursDecimal - hour24) * 60)
+
+    local period = hour24 < 12 and "AM" or "PM"
+    local hour12 = hour24 % 12
+    if hour12 == 0 then hour12 = 12 end
+
+    return string.format("%d:%02d %s", hour12, minute, period)
+end
+
+local function init_rednet()
+    for _, side in  ipairs(rs.getSides()) do
+        if peripheral.getType(side) == "modem" then
+            if not rednet.isOpen(side) then
+                rednet.open(side)
+                print("Rednet Launched")
+            end
+
+            rednet.host(PROTOCOL, HOST_NAME)
+            print("Hosting " .. HOST_NAME .. " under protocol " .. PROTOCOL)
+            return true
+        end
+    end
+    print("Error: No modem detected!")
+    return false
+end
+
+local function start_server()
+    print("Server ready! Listening for requests..")
+    while true do
+        if not rednet.isOpen() then
+            print("Connection lost! Attempting to reconnect..")
+            while not init_rednet() do
+                print("Failed, retrying in 5 seconds..")
+                sleep(5)
+            end
+        end
+
+
+        local sender_id, payload, protocol = rednet.receive(PROTOCOL)
+
+        if protocol == PROTOCOL then
+            if type(payload) == "table" then
+                if payload.message == "STATUS" then
+                    rednet.send(sender_id, formatTime12h(os.time()), PROTOCOL)
+                elseif payload.message == "CLEAR" then
+                    print(sender_id .. ": Set weather to clear")
+                    print(PROTOCOL)
+                    rednet.send(sender_id, "Setting to clear", PROTOCOL)
+                    redstone.setOutput("right", true)
+                    sleep(0.5)
+                    redstone.setOutput("right", false)
+                elseif payload.message == "DAY" then
+                    print(sender_id .. ": Set time to day")
+                    rednet.send(sender_id, "Setting to day", PROTOCOL)
+                    redstone.setOutput("left", true)
+                    sleep(0.5)
+                    redstone.setOutput("left", false)
+                end
+            end
         end
     end
 end
 
-local function updateText(text)
-    term.setBackgroundColor(colors.black)
-    term.setTextColor(colors.white)
-    term.setCursorPos(1,9)
-    term.clearLine()
-    term.setCursorPos(math.floor(w/2 - string.len(text) / 2 + 0.5), 9);
-    write(text);
+if init_rednet() then
+    start_server()
 end
-
-local function download(url, dest, attempt)
-    local rawData = http.get(url)
-    local fileName = url:match("[^/]*$")
-    updateText("Downloading " .. fileName)
-
-    if not rawData then
-        if attempt == 3 then error("Failed to download " .. url .. " after 3 attempts.") end
-        updateText("failed to download " .. url .. ". Trying again (attempt " .. attempt .. "/3)")
-        return download(url, attempt+1)
-    end
-
-    local destination = dest
-    if destination == nil or destination == "" then
-        destination = fileName
-    end
-    if string.sub(destination,-1) == "/" then
-        destination = destination .. fileName
-    end
-    updateText(destination)
-
-    local data = rawData.readAll()
-
-    local file = fs.open(destination, "w+")
-    file.write(data)
-    file.close()
-end
-
-local function downloadAll(downloads, total)
-    local nextFile = table.remove(downloads, 1)
-    if nextFile then
-        sleep(0.1)
-        parallel.waitForAll(function() downloadAll(downloads, total) end, function()
-            local destination = ""
-            if nextFile.dest ~= nil then
-                destination = destination .. nextFile.dest
-            end
-            if nextFile.rename ~= nil then
-                destination = destination .. nextFile.rename
-            end
-            download(nextFile.url .. nextFile.file, destination, 1)
-            totalDownloaded = totalDownloaded + 1
-            progressBar(totalDownloaded / total)
-        end)
-    end
-end
-
-local function install()
-    term.setBackgroundColor(colors.black)
-    term.setTextColor(colors.blue)
-    term.clear()
-
-    term.setCursorPos(math.floor(w/2 - #NAME/2 + 0.5), 2)
-    write(NAME)
-
-    updateText("Installing Dependencies..")
-    progressBar(0)
-
-    downloadAll(files, #files)
-
-    progressBar(100)
-    updateText("Complete! Starting now..")
-    sleep(1)
-
-    term.setBackgroundColor(colors.black)
-    term.setTextColor(colors.white)
-
-    term.clear()
-    term.setCursorPos(1,1)
-    os.reboot()
-end
-
-install()
